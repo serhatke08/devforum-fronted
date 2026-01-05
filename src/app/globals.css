@@ -1,26 +1,196 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Custom scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Video performance optimizations */
+video {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
+  -ms-interpolation-mode: bicubic;
+}
+
+/* Sadece tanıtım videolarına filter uygula (kiralanan banner'lara değil) */
+video.promo-video {
+  filter: contrast(1.05) saturate(1.05) brightness(1.02);
+  -webkit-filter: contrast(1.05) saturate(1.05) brightness(1.02);
+}
+
+/* High quality video rendering */
+video.high-quality {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  -ms-interpolation-mode: bicubic;
+  filter: contrast(1.1) saturate(1.1) brightness(1.05);
+  -webkit-filter: contrast(1.1) saturate(1.1) brightness(1.05);
+}
+
+/* Hardware acceleration for better performance */
+.performance-optimized {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-width: 100%;
+  max-width: 100vw;
+}
+
+/* Optimize images */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Tablet responsive optimizations */
+@media (max-width: 1024px) {
+  /* Prevent horizontal overflow on tablets */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  .max-w-4xl,
+  .max-w-6xl {
+    max-width: calc(100vw - 2rem);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Optimize text wrapping */
+  .break-words {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Prevent form elements from overflowing */
+  textarea,
+  input {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Optimize button layouts for tablets */
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  
+  /* Ensure proper spacing on tablets */
+  .gap-2 {
+    gap: 0.5rem;
+  }
+  
+  .gap-3 {
+    gap: 0.75rem;
+  }
+  
+  .gap-4 {
+    gap: 1rem;
+  }
+}
+
+/* Mobile responsive optimizations */
+@media (max-width: 768px) {
+  /* Further optimize for mobile */
+  .max-w-4xl,
+  .max-w-6xl {
+    max-width: calc(100vw - 1rem);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* Hide text on very small screens */
+  .hidden-sm\:inline {
+    display: none;
+  }
+  
+  /* Optimize button sizes for mobile */
+  button {
+    min-height: 44px; /* iOS touch target minimum */
+  }
+}
+
+/* Typing indicator animation */
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
+}
+
+.typing-dot {
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+/* Reduce motion for better performance */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

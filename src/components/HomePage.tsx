@@ -1,0 +1,29 @@
+'use client';
+
+import { AuthProvider } from '@/contexts/AuthContext';
+
+export function HomePage() {
+  return (
+    <AuthProvider>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            DevForum - Türkiye'nin En Büyük Yazılım Forumu
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Yazılım geliştiriciler, freelancerlar ve teknoloji meraklıları için platform
+          </p>
+          
+          {/* Placeholder - Gerçek component'ler sonra eklenecek */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <p>Ana sayfa içeriği yükleniyor...</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Component'ler migration sonrası eklenecek
+            </p>
+          </div>
+        </div>
+      </div>
+    </AuthProvider>
+  );
+}
+

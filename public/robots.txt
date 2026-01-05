@@ -1,0 +1,79 @@
+# DevForum - Robots.txt
+# Türkiye'nin En Büyük Yazılım ve Teknoloji Forumu
+
+# Ana Arama Motorları için İzinler
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /callback
+Disallow: /success
+Disallow: /fail
+Disallow: /auth/
+Disallow: /private/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /callback
+Disallow: /success
+Disallow: /fail
+Disallow: /auth/
+Disallow: /private/
+
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /callback
+Disallow: /success
+Disallow: /fail
+Disallow: /auth/
+Disallow: /private/
+
+# Tüm Diğer Bot'lar
+User-agent: *
+Allow: /
+Allow: /kategori/
+Allow: /tools/
+Allow: /trending
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /support
+Disallow: /api/
+Disallow: /admin/
+Disallow: /callback
+Disallow: /success
+Disallow: /fail
+Disallow: /auth/
+Disallow: /private/
+Disallow: /user/
+Disallow: /profile/
+Disallow: /messages/
+Disallow: /*?*utm_source=
+Disallow: /*?*utm_medium=
+Disallow: /*?*utm_campaign=
+
+# Kötü Niyetli Bot'ları Engelle
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+# Sitemap Konumu
+Sitemap: https://devforum.xyz/sitemap.xml
