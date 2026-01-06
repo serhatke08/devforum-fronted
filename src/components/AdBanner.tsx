@@ -116,7 +116,7 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
 
     try {
       // Banner pozisyonunun müsait olup olmadığını kontrol et
-      const { data: positionStatus, error } = await supabase.rpc<any>('get_banner_position_status', {
+      const { data: positionStatus, error } = await supabase.rpc('get_banner_position_status', {
         p_position: position
       } as any);
 
@@ -156,7 +156,7 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
       // 1) Önce RPC ile dene (RLS/406 bypass)
       let bannerData: any = null;
       try {
-        const { data: rpcData } = await supabase.rpc<any>('get_active_banner_by_position', { p_position: position } as any);
+        const { data: rpcData } = await supabase.rpc('get_active_banner_by_position', { p_position: position } as any);
         if (rpcData && Array.isArray(rpcData) && (rpcData as any[]).length > 0) {
           bannerData = (rpcData as any[])[0];
         }
