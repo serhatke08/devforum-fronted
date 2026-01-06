@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Helmet } // from 'react-helmet-async';
+// import { Helmet } from 'react-helmet-async';
 import { 
   Monitor,
   Palette,
@@ -97,48 +97,48 @@ import {
   Check,
   Minus
 } from 'lucide-react';
-import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
-import { TopicCard } from './components/TopicCard';
-import { AuthModal } from './components/AuthModal';
-import { NewTopicModal } from './components/NewTopicModal';
-import { TopicView } from './components/TopicView';
-import { UserProfile } from './components/UserProfile';
-import { ProfilePage } from './components/ProfilePage';
-import { CreditPurchase } from './components/CreditPurchase';
-import { CategoryPage } from './components/CategoryPage';
-import { MessagesPage } from './components/MessagesPage';
-import { AdBanner } from './components/AdBanner';
-import { BannerRental } from './components/BannerRental';
-import { MyBanners } from './components/MyBanners';
-import { BannerControl } from './components/BannerControl';
-import { TrendingPage } from './components/TrendingPage';
-import { SavedPage } from './components/SavedPage';
-import { ToolsPage } from './components/ToolsPage';
-import { FeaturedModal } from './components/FeaturedModal';
-import { CVCreator } from './components/tools/CVCreator';
-import { YouTubeDownloader } from './components/tools/YouTubeDownloader';
-import { ImageDPIConverter } from './components/tools/ImageDPIConverter';
-import { LockDownFiles } from './components/tools/LockDownFiles';
-import { TikTokDownloader } from './components/tools/TikTokDownloader';
-import { InstagramDownloader } from './components/tools/InstagramDownloader';
-import { CleanWork } from './components/tools/CleanWork';
-import { FenomenGPT } from './components/tools/FenomenGPT';
-import { ImageDPIConverterPro } from './components/tools/ImageDPIConverterPro';
-import { PDFEditorConverter } from './components/tools/PDFEditorConverter';
-import { Footer } from './components/Footer';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import MySuccessPage from './components/MySuccessPage';
-import MyFailPage from './components/MyFailPage';
-import { AboutPage } from './components/AboutPage';
-import { ContactPage } from './components/ContactPage';
-import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
-import { TermsOfServicePage } from './components/TermsOfServicePage';
-import { FAQPage } from './components/FAQPage';
-import { SupportPage } from './components/SupportPage';
-import { RequestInvitePage } from './components/RequestInvitePage';
-import { supabase } from './lib/supabase';
-import type { Database as DatabaseType } from './lib/database.types';
+import { Header } from '@/components/Header';
+import { Sidebar } from '@/components/Sidebar';
+import { TopicCard } from '@/components/TopicCard';
+import { AuthModal } from '@/components/AuthModal';
+import { NewTopicModal } from '@/components/NewTopicModal';
+import { TopicView } from '@/components/TopicView';
+import { UserProfile } from '@/components/UserProfile';
+import { ProfilePage } from '@/components/ProfilePage';
+import { CreditPurchase } from '@/components/CreditPurchase';
+import { CategoryPage } from '@/components/CategoryPage';
+import { MessagesPage } from '@/components/MessagesPage';
+import { AdBanner } from '@/components/AdBanner';
+import { BannerRental } from '@/components/BannerRental';
+import { MyBanners } from '@/components/MyBanners';
+import { BannerControl } from '@/components/BannerControl';
+import { TrendingPage } from '@/components/TrendingPage';
+import { SavedPage } from '@/components/SavedPage';
+import { ToolsPage } from '@/components/ToolsPage';
+import { FeaturedModal } from '@/components/FeaturedModal';
+import { CVCreator } from '@/components/tools/CVCreator';
+import { YouTubeDownloader } from '@/components/tools/YouTubeDownloader';
+import { ImageDPIConverter } from '@/components/tools/ImageDPIConverter';
+import { LockDownFiles } from '@/components/tools/LockDownFiles';
+import { TikTokDownloader } from '@/components/tools/TikTokDownloader';
+import { InstagramDownloader } from '@/components/tools/InstagramDownloader';
+import { CleanWork } from '@/components/tools/CleanWork';
+import { FenomenGPT } from '@/components/tools/FenomenGPT';
+import { ImageDPIConverterPro } from '@/components/tools/ImageDPIConverterPro';
+import { PDFEditorConverter } from '@/components/tools/PDFEditorConverter';
+import { Footer } from '@/components/Footer';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import MySuccessPage from '@/components/MySuccessPage';
+import MyFailPage from '@/components/MyFailPage';
+import { AboutPage } from '@/components/AboutPage';
+import { ContactPage } from '@/components/ContactPage';
+import { PrivacyPolicyPage } from '@/components/PrivacyPolicyPage';
+import { TermsOfServicePage } from '@/components/TermsOfServicePage';
+import { FAQPage } from '@/components/FAQPage';
+import { SupportPage } from '@/components/SupportPage';
+import { RequestInvitePage } from '@/components/RequestInvitePage';
+import { supabase } from '@/lib/supabase';
+import type { Database as DatabaseType } from '@/lib/database.types';
 
 type Topic = DatabaseType['public']['Tables']['topics']['Row'];
 
@@ -1324,7 +1324,7 @@ function AppContent() {
 
   return (
     <>
-      <Helmet>
+      <div>
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
         <link rel="canonical" href={meta.canonical} />
@@ -1333,7 +1333,7 @@ function AppContent() {
         <meta property="og:url" content={meta.canonical} />
         <meta name="twitter:title" content={meta.title} />
         <meta name="twitter:description" content={meta.description} />
-      </Helmet>
+      </div>
       <div className="min-h-screen bg-white max-w-full overflow-x-auto">
         <Header
         onMenuClick={() => setIsSidebarOpen(true)}
