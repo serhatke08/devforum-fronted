@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, username: string, displayName: string, inviteCode?: string) => {
     try {
-      // API URL'ini belirle
+      // API URL'ini belirle - Production'da backend URL kullan
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://devforum-backend-102j.onrender.com';
       
       // Kullanıcı adı ve display name kontrolü

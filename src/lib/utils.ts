@@ -33,3 +33,19 @@ export function formatRelativeTime(date: string | Date) {
     return 'Az önce';
   }
 }
+
+// Safe window check
+export function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
+export function getHostname(): string {
+  if (!isBrowser()) return '';
+  return window.location?.hostname || '';
+}
+
+export function isDevelopment(): boolean {
+  if (!isBrowser()) return false;
+  const hostname = getHostname();
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+}
