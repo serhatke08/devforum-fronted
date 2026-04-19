@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, username: string, displayName: string, inviteCode?: string) => Promise<{ error: any; needsEmailConfirmation?: boolean; message?: string }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -114,12 +115,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined
+        }
+      });
+
+      if (error) {
+        return { error: { ...error, message: error.message || 'Google ile giris baslatilamadi' } };
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      console.error('Google OAuth hatasi:', err);
+      return { error: { message: 'Google ile giris sirasinda bir hata olustu' } };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );

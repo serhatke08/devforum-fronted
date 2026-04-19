@@ -137,6 +137,7 @@ import { TermsOfServicePage } from '@/components/TermsOfServicePage';
 import { FAQPage } from '@/components/FAQPage';
 import { SupportPage } from '@/components/SupportPage';
 import { RequestInvitePage } from '@/components/RequestInvitePage';
+import { GoogleProfileCompletionModal } from '@/components/GoogleProfileCompletionModal';
 import { supabase } from '@/lib/supabase';
 import type { Database as DatabaseType } from '@/lib/database.types';
 
@@ -204,6 +205,17 @@ function AppContent() {
   const [showRemoveFromFavoritesMode, setShowRemoveFromFavoritesMode] = useState(false);
   const [justAddedFavorite, setJustAddedFavorite] = useState(false);
   const [selectedCategoriesToAdd, setSelectedCategoriesToAdd] = useState<string[]>([]);
+  const [showGoogleProfileCompletion, setShowGoogleProfileCompletion] = useState(false);
+  const [googleProfileLoading, setGoogleProfileLoading] = useState(false);
+  const [googleProfileError, setGoogleProfileError] = useState('');
+  const [googleProfileInitialValues, setGoogleProfileInitialValues] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    birthDate: '',
+    username: '',
+    displayName: ''
+  });
 
   // Seçili kategorileri favorilere ekle
   const saveSelectedFavorites = () => {
@@ -216,6 +228,158 @@ function AppContent() {
     setTimeout(() => {
       setJustAddedFavorite(false);
     }, 2000);
+  };
+
+  useEffect(() => {
+    const checkGoogleProfileRequirements = async () => {
+      try {
+        if (!user) {
+          setShowGoogleProfileCompletion(false);
+          setGoogleProfileError('');
+          return;
+        }
+
+        const providerRaw = user.app_metadata?.provider;
+        const providersRaw = user.app_metadata?.providers;
+        const providers = Array.isArray(providersRaw)
+          ? providersRaw
+          : typeof providersRaw === 'string'
+            ? [providersRaw]
+            : [];
+        const isGoogleUser = providerRaw === 'google' || providers.includes('google');
+        if (!isGoogleUser) {
+          setShowGoogleProfileCompletion(false);
+          setGoogleProfileError('');
+          return;
+        }
+
+        const metadata = user.user_metadata || {};
+        const metadataUsername = (metadata.username || '').toString().trim();
+        const metadataDisplayName = (metadata.display_name || '').toString().trim();
+        const metadataFirstName = (metadata.first_name || '').toString().trim();
+        const metadataLastName = (metadata.last_name || '').toString().trim();
+        const metadataPhone = (metadata.phone || '').toString().trim();
+        const metadataBirthDate = (metadata.birth_date || '').toString().trim();
+
+        const { data: profileData } = await (supabase as any)
+          .from('profiles')
+          .select('username, display_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const profileUsername = (profileData?.username || '').toString().trim();
+        const profileDisplayName = (profileData?.display_name || '').toString().trim();
+
+        const resolvedUsername = metadataUsername || profileUsername || '';
+        const resolvedDisplayName = metadataDisplayName || profileDisplayName || '';
+        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+        const hasMissingRequired =
+          !metadataFirstName ||
+          !metadataLastName ||
+          !metadataPhone ||
+          !metadataBirthDate ||
+          !resolvedUsername ||
+          !resolvedDisplayName ||
+          !usernameRegex.test(resolvedUsername);
+
+        setGoogleProfileInitialValues({
+          firstName: metadataFirstName,
+          lastName: metadataLastName,
+          phone: metadataPhone,
+          birthDate: metadataBirthDate,
+          username: resolvedUsername,
+          displayName: resolvedDisplayName
+        });
+        setShowGoogleProfileCompletion(hasMissingRequired);
+      } catch (error) {
+        console.error('Google profil kontrol hatasi:', error);
+        setShowGoogleProfileCompletion(false);
+      }
+    };
+
+    checkGoogleProfileRequirements();
+  }, [user]);
+
+  const handleCompleteGoogleProfile = async (formData: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    birthDate: string;
+    username: string;
+    displayName: string;
+  }) => {
+    if (!user) return;
+
+    setGoogleProfileLoading(true);
+    setGoogleProfileError('');
+
+    try {
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(formData.username)) {
+        throw new Error('Kullanici adinda sadece harf, rakam ve alt cizgi kullanabilirsiniz.');
+      }
+
+      const { data: currentProfile } = await (supabase as any)
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const existingUsername = (currentProfile?.username || '').toString().trim().toLowerCase();
+      const requestedUsername = formData.username.toLowerCase().trim();
+
+      if (existingUsername !== requestedUsername) {
+        const { data: isAvailable, error: rpcError } = await (supabase as any).rpc('is_username_available', {
+          p_username: requestedUsername
+        });
+
+        if (rpcError) {
+          throw new Error('Kullanici adi kontrol edilirken bir hata olustu.');
+        }
+
+        if (!isAvailable) {
+          throw new Error('Bu kullanici adi zaten kullaniliyor. Lutfen farkli bir kullanici adi secin.');
+        }
+      }
+
+      const { error: profileError } = await (supabase as any)
+        .from('profiles')
+        .update({
+          username: requestedUsername,
+          display_name: formData.displayName
+        })
+        .eq('id', user.id);
+
+      if (profileError) {
+        throw new Error('Profil bilgileri kaydedilemedi.');
+      }
+
+      const mergedMetadata = {
+        ...(user.user_metadata || {}),
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        birth_date: formData.birthDate,
+        username: requestedUsername,
+        display_name: formData.displayName
+      };
+
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: mergedMetadata
+      });
+
+      if (metadataError) {
+        throw new Error('Kullanici metadata bilgileri kaydedilemedi.');
+      }
+
+      setShowGoogleProfileCompletion(false);
+      window.location.reload();
+    } catch (error: any) {
+      setGoogleProfileError(error.message || 'Profil tamamlama sirasinda bir hata olustu.');
+    } finally {
+      setGoogleProfileLoading(false);
+    }
   };
 
   // Favori alt kategori ekleme fonksiyonu (seçim modunda)
@@ -376,7 +540,7 @@ function AppContent() {
   // URL'den state'i oku - sayfa yüklendiğinde veya URL değiştiğinde
   useEffect(() => {
     if (isInitialLoad) {
-      const path = location.pathname;
+      const path = location?.pathname || location || '/';
       
       // Success/Fail sayfaları
       if (path === '/success' || path === '/fail') {
@@ -427,7 +591,7 @@ function AppContent() {
       }
 
       // Tools alt sayfaları
-      if (path.startsWith('/tools/')) {
+      if (path?.startsWith('/tools/')) {
         const toolSlug = path.replace('/tools/', '');
         setSelectedCategory(toolSlug);
         setIsInitialLoad(false);
@@ -441,7 +605,7 @@ function AppContent() {
       // }
 
       // Topic sayfaları
-      if (path.startsWith('/topic/')) {
+      if (path?.startsWith('/topic/')) {
         const topicSlug = path.replace('/topic/', '');
         // Slug'dan topic ID'sini bul
         const topic = topics.find((t: any) => t.slug === topicSlug);
@@ -470,7 +634,7 @@ function AppContent() {
       }
 
       // User profile sayfaları
-      if (path.startsWith('/user/')) {
+      if (path?.startsWith('/user/')) {
         const userId = path.replace('/user/', '');
         setSelectedUserId(userId);
         setIsInitialLoad(false);
@@ -1225,7 +1389,7 @@ function AppContent() {
   // Dinamik meta tag'ler için sayfa bilgileri
   const getPageMeta = () => {
     const baseUrl = 'https://devforum.xyz';
-    const path = location.pathname;
+    const path = location?.pathname || location || '/';
     
     const pageMeta: Record<string, { title: string; description: string; canonical: string }> = {
       '/': {
@@ -1761,7 +1925,7 @@ function AppContent() {
             <ImageDPIConverterPro onBack={() => setSelectedCategory(null)} />
           ) : selectedCategory === 'pdf-editor-converter' ? (
             <PDFEditorConverter onBack={() => setSelectedCategory(null)} />
-          ) : selectedCategory && selectedCategory !== 'trending' && selectedCategory !== 'saved' && selectedCategory !== 'profile' && selectedCategory !== 'tools' && selectedCategory !== 'about' && selectedCategory !== 'contact' && selectedCategory !== 'privacy' && selectedCategory !== 'terms' && selectedCategory !== 'faq' && selectedCategory !== 'support' && !selectedCategory.startsWith('youtube-') && !selectedCategory.startsWith('image-') && !selectedCategory.startsWith('lock-') && !selectedCategory.startsWith('tiktok-') && !selectedCategory.startsWith('clean-') && !selectedCategory.startsWith('fenomen-') && selectedCategory !== 'cv-creator' && selectedCategory !== 'pdf-editor-converter' ? (
+          ) : typeof selectedCategory === 'string' && selectedCategory !== 'trending' && selectedCategory !== 'saved' && selectedCategory !== 'profile' && selectedCategory !== 'tools' && selectedCategory !== 'about' && selectedCategory !== 'contact' && selectedCategory !== 'privacy' && selectedCategory !== 'terms' && selectedCategory !== 'faq' && selectedCategory !== 'support' && !selectedCategory.startsWith('youtube-') && !selectedCategory.startsWith('image-') && !selectedCategory.startsWith('lock-') && !selectedCategory.startsWith('tiktok-') && !selectedCategory.startsWith('clean-') && !selectedCategory.startsWith('fenomen-') && selectedCategory !== 'cv-creator' && selectedCategory !== 'pdf-editor-converter' ? (
             /* Kategori sayfası */
             <div className="p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 max-w-full overflow-x-hidden">
               <CategoryPage
@@ -2494,6 +2658,15 @@ function AppContent() {
           setAuthModalOpen(false);
           setShowRequestInvite(true);
         }}
+      />
+
+      <GoogleProfileCompletionModal
+        isOpen={showGoogleProfileCompletion}
+        email={user?.email || ''}
+        initialValues={googleProfileInitialValues}
+        loading={googleProfileLoading}
+        error={googleProfileError}
+        onSubmit={handleCompleteGoogleProfile}
       />
 
       <NewTopicModal
