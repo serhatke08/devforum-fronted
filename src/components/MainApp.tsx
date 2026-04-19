@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import Head from 'next/head';
+// import { Helmet } from 'react-helmet-async';
 import { 
   Monitor,
   Palette,
@@ -1488,7 +1488,7 @@ function AppContent() {
 
   return (
     <>
-      <Head>
+      <Helmet>
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
         <link rel="canonical" href={meta.canonical} />
@@ -1497,7 +1497,7 @@ function AppContent() {
         <meta property="og:url" content={meta.canonical} />
         <meta name="twitter:title" content={meta.title} />
         <meta name="twitter:description" content={meta.description} />
-      </Head>
+      </Helmet>
       <div className="min-h-screen bg-white max-w-full overflow-x-auto">
         <Header
         onMenuClick={() => setIsSidebarOpen(true)}
