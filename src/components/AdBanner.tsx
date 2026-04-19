@@ -30,41 +30,14 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
   const [loading, setLoading] = useState(true);
   const [isPositionAvailable, setIsPositionAvailable] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isSupabaseReachable, setIsSupabaseReachable] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const maxRetries = 3;
-  const reconnectDelayMs = 120000;
-
-  const isNetworkError = (error: any) => {
-    const message = String(error?.message || '');
-    return (
-      message.includes('Failed to fetch') ||
-      message.includes('ERR_INTERNET_DISCONNECTED') ||
-      message.includes('ERR_CONNECTION_CLOSED') ||
-      message.includes('NetworkError') ||
-      message.includes('Load failed')
-    );
-  };
-
-  const triggerReconnectCooldown = () => {
-    if (!isSupabaseReachable) return;
-    setIsSupabaseReachable(false);
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-    reconnectTimeoutRef.current = setTimeout(() => {
-      setIsSupabaseReachable(true);
-      setRetryCount(0);
-    }, reconnectDelayMs);
-  };
 
   // İnternet bağlantısını izle
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      setIsSupabaseReachable(true);
       setRetryCount(0);
       // Bağlantı geri geldiğinde verileri yenile
       loadBanner();
@@ -86,21 +59,15 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
     };
   }, []);
 
   useEffect(() => {
-    if (isOnline && isSupabaseReachable) {
+    if (isOnline) {
       loadBanner();
       checkPositionAvailability();
-    } else if (!isSupabaseReachable) {
-      setLoading(false);
     }
-  }, [position, isOnline, isSupabaseReachable]);
+  }, [position, isOnline]);
 
   // Kiralama sonrası global tetikleme ile yeniden yükle
   useEffect(() => {
@@ -112,19 +79,19 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
     return () => window.removeEventListener('banner-updated', handleUpdated);
   }, []);
 
-  // Banner'ları periyodik olarak kontrol et (sadece online + erişilebilir olduğunda)
+  // Banner'ları periyodik olarak kontrol et (sadece online olduğunda)
   useEffect(() => {
-    if (isOnline && isSupabaseReachable) {
+    if (isOnline) {
       // Önceki interval'ı temizle
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
 
-      // Yeni interval başlat (2 dakikada bir)
+      // Yeni interval başlat (30 saniyede bir - daha makul)
       intervalRef.current = setInterval(() => {
         loadBanner();
         checkPositionAvailability();
-      }, 120000);
+      }, 30000);
 
       return () => {
         if (intervalRef.current) {
@@ -139,11 +106,11 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
         intervalRef.current = null;
       }
     }
-  }, [position, isOnline, isSupabaseReachable]);
+  }, [position, isOnline]);
 
   const checkPositionAvailability = async () => {
     // Offline durumunda işlem yapma
-    if (!isOnline || !isSupabaseReachable) {
+    if (!isOnline) {
       return;
     }
 
@@ -154,8 +121,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
       } as any);
 
       if (error) {
-        if (isNetworkError(error)) {
-          triggerReconnectCooldown();
+        // Sadece kritik hataları logla, network hatalarını sessizce geç
+        if (!error.message?.includes('Failed to fetch') && !error.message?.includes('ERR_INTERNET_DISCONNECTED')) {
         }
         setIsPositionAvailable(false);
         return;
@@ -165,8 +132,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
       const status = positionStatus as BannerPositionStatus[] | null;
       setIsPositionAvailable(!status?.[0]?.is_rented);
     } catch (error: any) {
-      if (isNetworkError(error)) {
-        triggerReconnectCooldown();
+      // Network hatalarını sessizce geç, diğer hataları logla
+      if (!error.message?.includes('Failed to fetch') && !error.message?.includes('ERR_INTERNET_DISCONNECTED')) {
       }
       setIsPositionAvailable(false);
     }
@@ -174,7 +141,7 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
 
   const loadBanner = async () => {
     // Offline durumunda işlem yapma
-    if (!isOnline || !isSupabaseReachable) {
+    if (!isOnline) {
       setLoading(false);
       return;
     }
@@ -193,11 +160,7 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
         if (rpcData && Array.isArray(rpcData) && (rpcData as any[]).length > 0) {
           bannerData = (rpcData as any[])[0];
         }
-      } catch (rpcError: any) {
-        if (isNetworkError(rpcError)) {
-          triggerReconnectCooldown();
-        }
-      }
+      } catch {}
 
       // 2) RPC boş dönerse REST denemeyi kapat (406 spam önleme)
       if (!bannerData) {
@@ -258,8 +221,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
       // Başarılı olursa retry sayacını sıfırla
       setRetryCount(0);
     } catch (error: any) {
-      if (isNetworkError(error)) {
-        triggerReconnectCooldown();
+      // Network hatalarını sessizce geç, diğer hataları logla
+      if (!error.message?.includes('Failed to fetch') && !error.message?.includes('ERR_INTERNET_DISCONNECTED')) {
       }
       
       // Retry sayacını artır
@@ -287,8 +250,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
     );
   }
 
-  // Offline veya Supabase erişilemez durumunda özel mesaj göster
-  if (!isOnline || !isSupabaseReachable) {
+  // Offline durumunda özel mesaj göster
+  if (!isOnline) {
     const isHorizontalBanner = className?.includes('flex-1');
     
     if (isHorizontalBanner) {
@@ -296,8 +259,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
         <div className={`bg-gray-100 border-2 border-gray-300 rounded-lg overflow-hidden ${className}`} style={{ minHeight: '64px' }}>
           <div className="relative h-16 sm:h-20 flex items-center justify-center">
             <div className="text-center text-gray-600">
-              <h3 className="text-xs sm:text-sm font-bold">Baglanti Sorunu</h3>
-              <p className="text-[10px] sm:text-xs opacity-75">Reklam servisi yeniden deneniyor</p>
+              <h3 className="text-xs sm:text-sm font-bold">Bağlantı Yok</h3>
+              <p className="text-[10px] sm:text-xs opacity-75">İnternet bağlantısı bekleniyor</p>
             </div>
           </div>
         </div>
@@ -311,8 +274,8 @@ export function AdBanner({ position, className = '' }: AdBannerProps) {
             <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
               <ExternalLink className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-bold mb-1">Baglanti Sorunu</h3>
-            <p className="text-sm opacity-75">Reklam servisi yeniden deneniyor</p>
+            <h3 className="text-lg font-bold mb-1">Bağlantı Yok</h3>
+            <p className="text-sm opacity-75">İnternet bağlantısı bekleniyor</p>
           </div>
         </div>
       </div>
