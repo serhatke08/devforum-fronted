@@ -161,8 +161,9 @@ interface TopicWithDetails extends Topic {
 
 function AppContent() {
   const { user } = useAuth();
-  const navigate = useRouter();
+  const router = useRouter();
   const location = usePathname();
+  const pathname = location || '/';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -424,7 +425,9 @@ function AppContent() {
   };
   
   // URL kontrolü - Success ve Fail sayfaları için
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(
+    typeof window !== 'undefined' ? window.location.pathname : '/'
+  );
   const [historyStack, setHistoryStack] = useState<Array<{type: string, data: any}>>([]);
   
   // Browser history entegrasyonu - telefon geri tuşu için
@@ -540,7 +543,7 @@ function AppContent() {
   // URL'den state'i oku - sayfa yüklendiğinde veya URL değiştiğinde
   useEffect(() => {
     if (isInitialLoad) {
-      const path = location?.pathname || location || '/';
+      const path = pathname;
       
       // Success/Fail sayfaları
       if (path === '/success' || path === '/fail') {
@@ -654,7 +657,7 @@ function AppContent() {
 
       setIsInitialLoad(false);
     }
-  }, [location.pathname, allCategoriesWithSubs, topics, isInitialLoad]);
+  }, [pathname, allCategoriesWithSubs, topics, isInitialLoad]);
 
   // Kategoriler yüklendikten sonra URL'den kategori okuma KALDIRILDI
   // Alt kategori seçildiğinde URL değişmemeli, bu yüzden URL'den kategori okuma da kaldırıldı
@@ -673,8 +676,8 @@ function AppContent() {
 
     // ÖNCE: Eğer tüm state'ler temizlenmişse (anasayfa), KESINLIKLE '/' yap ve çık
     if (!selectedCategory && !selectedTopicId && !selectedUserId && !showProfile) {
-      if (location.pathname !== '/' && location.pathname !== '/anasayfa') {
-        navigate('/', { replace: true });
+      if (pathname !== '/' && pathname !== '/anasayfa') {
+        router.replace('/');
         setCurrentPath('/');
       }
       return; // Anasayfadayken diğer kontrollere girmesin
@@ -728,11 +731,11 @@ function AppContent() {
     // Kategori seçildiğinde newPath null kalır, URL güncellenmez
 
     // URL'i güncelle (sadece newPath set edildiyse)
-    if (newPath && newPath !== location.pathname) {
-      navigate(newPath, { replace: true });
+    if (newPath && newPath !== pathname) {
+      router.replace(newPath);
       setCurrentPath(newPath);
     }
-  }, [selectedCategory, selectedTopicId, selectedTopicSlug, selectedUserId, showProfile, allCategoriesWithSubs, isInitialLoad, navigate, location.pathname]);
+  }, [selectedCategory, selectedTopicId, selectedTopicSlug, selectedUserId, showProfile, allCategoriesWithSubs, isInitialLoad, router, pathname]);
 
   // Auth modal event listener
   useEffect(() => {
@@ -833,7 +836,7 @@ function AppContent() {
   useEffect(() => {
     const pingBackend = async () => {
       try {
-        const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.');
+        const isDevelopment = process.env.NODE_ENV !== 'production' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.');
         const apiBaseUrl = isDevelopment 
           ? `http://${window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '192.168.0.6' : window.location.hostname}:3001`
           : 'https://devforum-backend-102j.onrender.com';
@@ -1517,7 +1520,7 @@ function AppContent() {
             return;
           }
           // ÖNCE URL'yi kesinlikle anasayfaya yönlendir
-          navigate('/', { replace: true });
+          router.replace('/');
           setCurrentPath('/');
           // SONRA state'leri temizle - böylece useEffect kategori set edemez
           setHistoryStack([]);
@@ -1545,7 +1548,7 @@ function AppContent() {
             // Eğer anasayfa seçildiyse (null), history stack'i temizle ve direkt anasayfaya git
             if (cat === null) {
               // ÖNCE URL'yi kesinlikle anasayfaya yönlendir
-              navigate('/', { replace: true });
+              router.replace('/');
               setCurrentPath('/');
               // SONRA state'leri temizle
               setHistoryStack([]);
@@ -1934,7 +1937,7 @@ function AppContent() {
                 initialSubCategory={selectedSubCategory || undefined}
                 onBack={() => {
                   // ÖNCE URL'yi kesinlikle anasayfaya yönlendir
-                  navigate('/', { replace: true });
+                  router.replace('/');
                   setCurrentPath('/');
                   // SONRA state'leri temizle
                   setHistoryStack([]);
